@@ -132,6 +132,7 @@
         </card>
       </div>
     </div>
+    <Json :value="tableData"></Json>
   </div>
 </template>
 
@@ -271,7 +272,7 @@ export default {
           //Actualizamos la información del broker cada 5 segundos
           setTimeout(() => {
             this.getBrokerInfo();
-          }, 5000);
+          }, 50000);
         }
       } catch (error) {
         this.$notify({

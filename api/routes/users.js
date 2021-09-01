@@ -6,6 +6,7 @@ const { checkAuth } = require("../middlewares/authentication.js");
 
 //models import
 import User from "../models/user.js";
+import Profile from "../models/profile.js";
 import EmqxAuthRule from "../models/emqx_auth.js";
 
 //POST -> req.body
@@ -14,6 +15,39 @@ import EmqxAuthRule from "../models/emqx_auth.js";
 //******************
 //**** A P I *******
 //******************
+
+router.get("/users", checkAuth, async (req, res) => {
+  try {
+    var users = await User.find();
+    var totalUsers = users.length;
+
+    var usersActives = await User.find({ active: true });
+    var totalUsersActives = usersActives.length;
+
+    var usersInactives = await User.find({ active: false });
+    var totalUsersInactives = usersInactives.length;
+
+    const response = {
+      status: "success",
+      data: users,
+      totalUsers: totalUsers,
+      totalUsersActives: totalUsersActives,
+      totalUsersInactives: totalUsersInactives
+    };
+
+    res.json(response);
+  } catch (error) {
+    console.log("ERROR GETTING USERS");
+    console.log(error);
+
+    const response = {
+      status: "error",
+      error: error
+    };
+
+    return res.status(500).json(response);
+  }
+});
 
 //LOGIN
 router.post("/login", async (req, res) => {
@@ -32,9 +66,9 @@ router.post("/login", async (req, res) => {
       return res.status(401).json(response);
     }
 
-    //if email and email ok
+    //if email and user ok
     if (bcrypt.compareSync(password, user.password)) {
-      user.set("password", undefined, { strict: false });
+      user.set("password", undefined, { strict: false });   
 
       const token = jwt.sign({ userData: user }, "securePasswordHere", {
         expiresIn: 60 * 60 * 24 * 30
@@ -60,7 +94,7 @@ router.post("/login", async (req, res) => {
 });
 
 //REGISTER
-router.post("/register", async (req, res) => {
+router.post("/register", checkAuth, async (req, res) => {
   try {
     const name = req.body.name;
     const email = req.body.email;
@@ -70,11 +104,82 @@ router.post("/register", async (req, res) => {
     const newUser = {
       name: name,
       email: email,
-      password: encryptedPassword
+      created_at: new Date(),
+      password: encryptedPassword,
+      isAdmin: false,
+      active: false,
     };
 
     var user = await User.create(newUser);
 
+    const response = {
+      status: "success"
+    };
+
+    //Crear perfil con el id del usuario y el resto de campos en blanco
+    await createPerfil(user);
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.log("ERROR - REGISTER ENDPOINT");
+    console.log(error);
+
+    const response = {
+      status: "error",
+      error: error
+    };
+
+    return res.status(500).json(response);
+  }
+});
+
+//UPDATE USER
+router.put("/update", checkAuth, async (req, res) => {
+  try {
+    const userId = req.body.id;
+    const userName = req.body.name;
+    const userEmail = req.body.email;
+
+    await User.updateOne(
+      { _id: userId },
+      {
+        name: userName,
+        email: userEmail
+      }
+    );
+
+    const response = {
+      status: "success"
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.log("ERROR - REGISTER ENDPOINT");
+    console.log(error);
+
+    const response = {
+      status: "error",
+      error: error
+    };
+
+    console.log(response);
+
+    return res.status(500).json(response);
+  }
+});
+
+//Activate - desactivate user
+router.put("/activateDesactivate", checkAuth, async (req, res) => {
+  try {
+    const userId = req.body.userId;
+    const userActive = req.body.userActive;
+
+    await User.updateOne(
+      { _id: userId },
+      {
+        active: !userActive
+      }
+    );
 
     const response = {
       status: "success"
@@ -244,6 +349,27 @@ function makeid(length) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
+}
+
+//Funcion para crear el perfil del usuario
+async function createPerfil(user) {
+  const newProfile = {
+    userId: user._id,
+    company: '',
+    avatar: '',
+    jobTitle: '',
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    country: '',
+    postalCode: '',
+    phone: ''
+  };
+
+  var profile = await Profile.create(newProfile);
+
+  return;  
 }
 
 module.exports = router;

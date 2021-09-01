@@ -53,6 +53,16 @@
           }"
         >
         </sidebar-item>
+
+        <sidebar-item
+          
+          :link="{
+            name: 'Usuarios',
+            icon: 'fas fa-users',
+            path: '/users'
+          }"
+        >
+        </sidebar-item>
       </template>
     </side-bar>
 
