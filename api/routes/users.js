@@ -18,13 +18,14 @@ import EmqxAuthRule from "../models/emqx_auth.js";
 
 router.get("/users", checkAuth, async (req, res) => {
   try {
-    var users = await User.find();
+    var users = await User.find().sort('name');
+    
     var totalUsers = users.length;
 
-    var usersActives = await User.find({ active: true });
+    var usersActives = await User.find({ active: 'ACTIVO' });
     var totalUsersActives = usersActives.length;
 
-    var usersInactives = await User.find({ active: false });
+    var usersInactives = await User.find({ active: 'INACTIVO' });
     var totalUsersInactives = usersInactives.length;
 
     const response = {
@@ -107,7 +108,7 @@ router.post("/register", checkAuth, async (req, res) => {
       created_at: new Date(),
       password: encryptedPassword,
       isAdmin: false,
-      active: false,
+      active: 'ACTIVO',
     };
 
     var user = await User.create(newUser);
@@ -172,12 +173,12 @@ router.put("/update", checkAuth, async (req, res) => {
 router.put("/activateDesactivate", checkAuth, async (req, res) => {
   try {
     const userId = req.body.userId;
-    const userActive = req.body.userActive;
+    const userActive = req.body.userActive; 
 
     await User.updateOne(
       { _id: userId },
       {
-        active: !userActive
+        active: userActive
       }
     );
 

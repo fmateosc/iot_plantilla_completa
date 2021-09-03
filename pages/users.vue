@@ -1,21 +1,114 @@
 <template>
-  <div class="content">
-    <div class="col-md-8 ml-auto mr-auto">
-      <h2 class="text-center">Paginated Tables</h2>
-      <p class="text-center">
-        With a selection of custom components & and Element UI components, you
-        can built beautiful data tables. For more info check
-        <a
-          href="http://element.eleme.io/#/en-US/component/table"
-          target="_blank"
-          >Element UI Table</a
+  <div class="div">
+    <!----------ESTADÍSTICAS-------------------------------------------------->
+    <div class="row">
+      <div class="col-lg-4 col-md-6">
+        <stats-card
+          :title="totalUsers"
+          sub-title="Usuarios totales"
+          type="primary"
+          icon="fas fa-users"
         >
-      </p>
+          <div slot="footer">Usuarios totales: {{ totalUsers }}</div>
+        </stats-card>
+      </div>
+
+      <div class="col-lg-4 col-md-6">
+        <stats-card
+          :title="totalUsersActives"
+          sub-title="Usuarios activos"
+          type="primary"
+          icon="fas fa-users"
+        >
+          <div slot="footer">Usuarios activos: {{ totalUsersActives }}</div>
+        </stats-card>
+      </div>
+
+      <div class="col-lg-4 col-md-6">
+        <stats-card
+          :title="totalUsersInactives"
+          sub-title="Usuarios inactivos"
+          type="primary"
+          icon="fas fa-users"
+        >
+          <div slot="footer"><div slot="footer">Usuarios inactivos: {{ totalUsersInactives }}</div></div>
+        </stats-card>
+      </div>
     </div>
-    <div class="row mt-5">
+
+    <!----------FORMULARIO AÑADIR/EDITAR USUARIO ------------------------------>
+    <card>
+      <div v-if="newUser" slot="header">
+        <h4 class="card-title">
+          <span>
+            <i class="fas fa-user-plus"></i>
+          </span>
+
+          Nuevo usuario
+        </h4>
+      </div>
+
+      <div v-else slot="header">
+        <h4 class="card-title">
+          <span>
+            <i class="fas fa-user-edit"></i>
+          </span>
+
+          Editar usuario
+        </h4>
+      </div>
+
+      <div class="row">
+        <div class="col-4">
+          <base-input
+            label="Nombre"
+            type="text"
+            placeholder="Nombre de usuario"
+            v-model="user.name"
+          >
+          </base-input>
+        </div>
+
+        <div class="col-4">
+          <base-input
+            label="Email"
+            type="email"
+            placeholder="Email"
+            v-model="user.email"
+          >
+          </base-input>
+        </div>
+
+        <div class="col-4">
+          <base-input
+            label="Contraseña"
+            type="text"
+            placeholder="Contraseña"
+            v-model="user.password"
+            disabled
+          >
+          </base-input>
+        </div>
+      </div>
+
+      <div class="row pull-right">
+        <div class="col-12">
+          <base-button 
+            type="primary" 
+            class="mb-3" 
+            @click="newOrUpdateUser()"
+            size="lg"
+            >Guardar</base-button
+          >
+        </div>
+      </div>
+    </card>
+
+    <!----------TABLA USUARIOS------------------------------------------------->
+    <div class="row">
       <div class="col-12">
         <card card-body-classes="table-full-width">
-          <h4 slot="header" class="card-title">Paginated Tables</h4>
+          <h4 slot="header" class="card-title">Usuarios</h4>
           <div>
             <div
               class="col-12 d-flex justify-content-center justify-content-sm-between flex-wrap"
@@ -48,47 +141,50 @@
                 </el-input>
               </base-input>
             </div>
-            <el-table :data="queriedData">
-              <!--------------------------USUARIO------------------------------------->
-              <el-table-column label="USUARIO" width="250">
-                <template slot-scope="scope">
-                  {{ scope.row.name }}
-                </template>
+            <el-table 
+              :data="queriedData">
+
+              <!--------------------------NOMBRE------------------------------------->
+              <el-table-column
+                prop="name"
+                label="Nombre"
+                width="400">
               </el-table-column>
 
               <!--------------------------EMAIL------------------------------------->
-              <el-table-column label="EMAIL" width="300">
-                <template slot-scope="scope">
-                  {{ scope.row.email }}
-                </template>
+              <el-table-column
+                prop="email"
+                label="Email"
+                width="400">
               </el-table-column>
 
               <!--------------------------CREADO EL------------------------------------->
-              <el-table-column label="CREADO EL" width="150">
+              <el-table-column label="CREADO EL" width="180">
                 <template slot-scope="scope">
                   {{ formatDate(scope) }}
                 </template>
               </el-table-column>
 
+              <!--------------------------ACTIVO------------------------------------->
               <el-table-column
-                v-for="column in tableColumns"
-                :key="column.label"
-                :min-width="column.minWidth"
-                :prop="column.prop"
-                :label="column.label"
-              >
+                prop="active"
+                label="Activo"
+                width="200">
               </el-table-column>
+
+              <!---------------------------ACCIONES------------------------------------>
               <el-table-column :min-width="135" align="right" label="Actions">
                 <div slot-scope="props">
                   <base-button
-                    @click.native="handleLike(props.$index, props.row)"
-                    class="like btn-link"
-                    type="info"
+                    @click.native="showProfile(props.$index, props.row)"
+                    class="edit btn-link"
+                    type="primary"
                     size="sm"
                     icon
                   >
-                    <i class="tim-icons icon-heart-2"></i>
-                  </base-button>
+                    <i class="fa fa-user-md"></i>
+                  </base-button>  
+
                   <base-button
                     @click.native="handleEdit(props.$index, props.row)"
                     class="edit btn-link"
@@ -97,15 +193,16 @@
                     icon
                   >
                     <i class="tim-icons icon-pencil"></i>
-                  </base-button>
+                  </base-button>               
+
                   <base-button
-                    @click.native="handleDelete(props.$index, props.row)"
+                    @click.native="handleActivarDesactivar(props.$index, props.row)"
                     class="remove btn-link"
                     type="danger"
                     size="sm"
                     icon
                   >
-                    <i class="tim-icons icon-simple-remove"></i>
+                     <span v-html= formatIcon(props.row) ></span>
                   </base-button>
                 </div>
               </el-table-column>
@@ -131,9 +228,9 @@
         </card>
       </div>
     </div>
-    <Json :value="tableData"></Json>
   </div>
 </template>
+
 <script>
 import StatsCard from "@/components/Cards/StatsCard";
 
@@ -142,11 +239,11 @@ moment.locale("es");
 
 import { Table, TableColumn, Select, Option } from "element-ui";
 import { BasePagination } from "@/components";
-import users from "../util/mock-users";
 import Fuse from "fuse.js";
 import swal from "sweetalert2";
 
 export default {
+  middleware: "authenticated",
   name: "paginated",
   components: {
     BasePagination,
@@ -191,11 +288,21 @@ export default {
         total: 0
       },
       searchQuery: "",
-      propsToSearch: ["name", "email"],
-      tableColumns: [],
-      tableData: users,
+      propsToSearch: [,"name", "email", "active"], 
       searchedData: [],
-      fuseSearch: null
+      fuseSearch: null,      
+      tableData: [],
+      totalUsers: "0",
+      totalUsersActives: "0",
+      totalUsersInactives: "0",
+      user: {
+        id: "",
+        name: "",
+        email: "",
+        password: "",
+        active: true
+      },
+      newUser: true
     };
   },
   methods: {
@@ -210,12 +317,20 @@ export default {
       try {
         const res = await this.$axios.get("/users", axiosHeaders);
 
-        if (res.data.status == "success") {
+        if (res.data.status == "success") { 
           this.tableData = res.data.data;
-
+          
           this.totalUsers = res.data.totalUsers.toString();
           this.totalUsersActives = res.data.totalUsersActives.toString();
           this.totalUsersInactives = res.data.totalUsersInactives.toString();
+
+          // Fuse search initialization.
+          this.fuseSearch = new Fuse(this.tableData, {
+            keys: ["name", "email", "active"],
+            threshold: 0.3
+          });
+
+          this.generatePasswordRand()
         }
       } catch (error) {
         this.$notify({
@@ -227,64 +342,223 @@ export default {
         return;
       }
     },
+    //¿Creamos o modificamos el usuario
+    newOrUpdateUser() {
+      if (this.newUser) {
+        this.saveUser();    
+      }else{
+        this.updateUser()
+      }
+    },
+    //Nuevo usuario
+    async saveUser() {
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token
+        }
+      };
+
+      this.$axios
+        .post("/register", this.user, axiosHeaders)
+        .then(res => {
+          //success! - Usuario creado.
+          if (res.data.status == "success") {
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: "¡Usuario creado con éxito!"
+            });
+
+            this.user.name = "";
+            this.user.password = "";
+            this.user.email = "";
+
+            this.dialog = false;
+
+            this.getUsers();
+
+            return;
+          }
+        })
+        .catch(e => {
+          console.log(e.response.data);
+
+          if (e.response.data.error.errors.email.kind == "unique") {
+            this.$notify({
+              type: "danger",
+              icon: "tim-icons icon-alert-circle-exc",
+              message: "¡Usuario existente!"
+            });
+
+            return;
+          } else {
+            this.$notify({
+              type: "danger",
+              icon: "tim-icons icon-alert-circle-exc",
+              message: "¡Error al crear el usuario!"
+            });
+
+            return;
+          }
+        });
+    },
+    //Actualizar usuario
+    async updateUser() { 
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token
+        }
+      };
+
+      this.$axios
+        .put("/update", this.user, axiosHeaders)
+        .then(res => {
+          //success! - Usuario modificado.
+          if (res.data.status == "success") {
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: "¡Usuario actualizado!"
+            });
+
+            this.user.name = "";
+            this.user.email = "";
+
+            this.newUser = true;
+
+            this.getUsers();
+
+            return;
+          }
+        })
+        .catch(e => {
+          console.log(e.response.data);
+
+          if (e.response.data.error.errors.email.kind == "unique") {
+            this.$notify({
+              type: "danger",
+              icon: "tim-icons icon-alert-circle-exc",
+              message: "¡Email ya registrado!"
+            });
+
+            return;
+          } else {
+            this.$notify({
+              type: "danger",
+              icon: "tim-icons icon-alert-circle-exc",
+              message: "Error actualizando usuario!"
+            });
+
+            return;
+          }
+        });  
+    },  
+    //Activar-deactivar usuario
+    async activateDesactivate(respuesta) {
+      const toSend = {
+        userId: this.user.id,
+        userActive: respuesta
+      };
+      
+      const axiosHeaders = {
+        headers: {
+          token: this.$store.state.auth.token
+        }
+      };
+     
+      this.$axios
+        .put("/activateDesactivate", toSend, axiosHeaders)
+        .then(res => {
+          var mensaje = "";
+          
+          if (res.data.status == "success") {
+            if (respuesta == "ACTIVO") {
+              mensaje = "¡Usuario activado!";
+            } else {
+              mensaje = "¡Usuario desactivado!";
+            }
+            this.$notify({
+              type: "success",
+              icon: "tim-icons icon-check-2",
+              message: mensaje
+            });
+
+            this.getUsers();
+
+            return;
+          }
+        })
+        .catch(e => {
+          console.log(e.response.data);
+        });
+    },  
     //Formatea la fecha al español
     formatDate(scope) {
       return moment(scope.row.created_at).format("DD/MM/YYYY");
     },
-    handleLike(index, row) {
-      swal({
-        title: `You liked ${row.name}`,
-        buttonsStyling: false,
-        type: "success",
-        confirmButtonClass: "btn btn-success btn-fill"
-      });
+    formatActiveDesactive(scope) {
+      if (scope.row.active == 'ACTIVO') {
+        return `<span v-if="scope.row.connected">
+                  <i class="fa fa-circle p-r-5 verde" aria-hidden="true"></i>
+                  ACTIVO
+                </span>`
+      } else {
+        return `<span v-if="scope.row.connected">
+                  <i class="fa fa-circle p-r-5 rojo" aria-hidden="true"></i>
+                  INACTIVO
+                </span>`
+      }
+    },
+    formatIcon(row) {
+      if (row.active == 'ACTIVO') {
+        return `<i class="fas fa-lock p-r-5 azul" aria-hidden="true"></i>`
+      } else {
+        return `<i class="fas fa-unlock p-r-5 rojo" aria-hidden="true"></i>`
+      }
+    },
+    //Generamos un password aleatorio
+    generatePasswordRand() {
+      const characters =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#&";
+      var pass = "";
+
+      for (var i = 0; i < 15; i++) {
+        pass += characters.charAt(
+          Math.floor(Math.random() * characters.length)
+        );
+      }
+
+      this.user.password = pass;
     },
     handleEdit(index, row) {
-      swal({
-        title: `You want to edit ${row.name}`,
-        buttonsStyling: false,
-        confirmButtonClass: "btn btn-info btn-fill"
-      });
+      this.newUser = false;
+
+      this.user.id = row._id;
+      this.user.name = row.name;
+      this.user.email = row.email;
+      this.password = '';      
     },
-    handleDelete(index, row) {
-      swal({
-        title: "Are you sure?",
-        text: `You won't be able to revert this!`,
-        type: "warning",
-        showCancelButton: true,
-        confirmButtonClass: "btn btn-success btn-fill",
-        cancelButtonClass: "btn btn-danger btn-fill",
-        confirmButtonText: "Yes, delete it!",
-        buttonsStyling: false
-      }).then(result => {
-        if (result.value) {
-          this.deleteRow(row);
-          swal({
-            title: "Deleted!",
-            text: `You deleted ${row.name}`,
-            type: "success",
-            confirmButtonClass: "btn btn-success btn-fill",
-            buttonsStyling: false
-          });
-        }
-      });
-    },
-    deleteRow(row) {
-      let indexToDelete = this.tableData.findIndex(
-        tableRow => tableRow.id === row.id
-      );
-      if (indexToDelete >= 0) {
-        this.tableData.splice(indexToDelete, 1);
+    handleActivarDesactivar(index, row) {
+      var respuesta = "";
+
+      this.user.id = row._id;
+
+      if (row.active == "ACTIVO") {
+        respuesta = "INACTIVO"
+      } else {
+        respuesta = "ACTIVO"
       }
-    }
+      
+      this.activateDesactivate(respuesta);
+    },
+    showProfile(index, row) {      
+      this.$store.commit('setProfileId', row._id);     
+      
+      $nuxt.$router.push("/profile");
+    }   
   },
   mounted() {
     this.getUsers();
-    // Fuse search initialization.
-    this.fuseSearch = new Fuse(this.tableData, {
-      keys: ["name", "email"],
-      threshold: 0.3
-    });
   },
   watch: {
     /**
@@ -294,6 +568,7 @@ export default {
      */
     searchQuery(value) {
       let result = this.tableData;
+
       if (value !== "") {
         result = this.fuseSearch.search(this.searchQuery);
       }
@@ -306,5 +581,29 @@ export default {
 .pagination-select,
 .search-input {
   width: 200px;
+}
+
+.card-title {
+  padding-top: 20px !important;
+}
+
+.p-r-5 {
+  padding-right: 5px;
+}
+
+.azul {
+  color:#03A9F4 !important;
+}
+
+.verde {
+  color: green;
+}
+
+.rojo {
+  color: red;
+}
+
+span {
+  padding-right: 10px !important;
 }
 </style>

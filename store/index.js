@@ -11,6 +11,10 @@ export const mutations = {
     state.auth = auth;
   },
 
+  setProfileId(state, profileId){
+    state.profileUserId = profileId;
+  },
+
   setNotifications(state, notifications) {
     state.notifications = notifications;
   },
