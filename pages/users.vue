@@ -108,7 +108,17 @@
     <div class="row">
       <div class="col-12">
         <card card-body-classes="table-full-width">
-          <h4 slot="header" class="card-title">Usuarios</h4>
+          <p class="table-title" slot="header">Usuarios
+            <span>
+              <base-button
+                type="primary" 
+                class="pull-right" 
+                @click="generatePdf()">
+                Generar pdf
+              </base-button>
+            </span>
+          </p>
+
           <div>
             <div
               class="col-12 d-flex justify-content-center justify-content-sm-between flex-wrap"
@@ -237,10 +247,13 @@ import StatsCard from "@/components/Cards/StatsCard";
 import * as moment from "moment";
 moment.locale("es");
 
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+
 import { Table, TableColumn, Select, Option } from "element-ui";
 import { BasePagination } from "@/components";
+
 import Fuse from "fuse.js";
-import swal from "sweetalert2";
 
 export default {
   middleware: "authenticated",
@@ -555,6 +568,41 @@ export default {
       this.$store.commit('setProfileId', row._id);     
       
       $nuxt.$router.push("/profile");
+    },
+    //Generar PDF
+    generatePdf() {
+      var columns = [
+        {title: "Nombre", dataKey: "name"}, 
+        {title: "Email", dataKey: "email"},
+        {title: "Creado el", dataKey: "created_at"},
+        {title: "Activo", dataKey: "active"}
+      ];
+
+      var rows = this.tableData;
+
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "in",
+        format: "letter"
+      });
+
+      doc.setFontSize(16).text("LISTADO DE USUARIOS", 0.5, 1.0);
+      
+      doc.setLineWidth(0.01).line(0.5, 1.1, 8.0, 1.1);      
+
+      doc.autoTable({
+        columns,
+        body: rows,
+        margin: { left: 0.5, top: 0.5 },
+        startY: doc.pageCount > 1? doc.autoTableEndPosY() + 0.50 : 1.25,
+        didParseCell: function(data) {
+          if (data.column.dataKey === 'created_at') {
+              data.cell.text = moment(data.cell.raw).format("DD/MM/YYYY");
+          }
+        }
+      });
+
+      doc.save("usuarios.pdf");
     }   
   },
   mounted() {
@@ -605,5 +653,9 @@ export default {
 
 span {
   padding-right: 10px !important;
+}
+
+.table-title {
+  font-size: 1.0625rem !important;
 }
 </style>
