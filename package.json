@@ -41,7 +41,11 @@
     "sweetalert2": "^7.29.0",
     "tween.js": "^16.6.0",
     "vue-chartjs": "^3.4.0",
-    "vue2-transitions": "^0.2.3"
+    "vue2-transitions": "^0.2.3",
+    "swiper": "^5.3.7",
+    "vue-awesome-swiper": "^4.1.0",
+    "vue-count-to": "^1.0.13",
+    "vue-observe-visibility": "^0.4.6"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.1",
